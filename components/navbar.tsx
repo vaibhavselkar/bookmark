@@ -8,13 +8,21 @@ import { useEffect, useState } from 'react';
 export function Navbar() {
   const router = useRouter();
   const supabase = createClient();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      setUserEmail(user?.email || null);
+      
+      // Google stores name in user_metadata.full_name or user_metadata.name
+      const name =
+        user?.user_metadata?.full_name ||
+        user?.user_metadata?.name ||
+        user?.email ||
+        null;
+
+      setDisplayName(name);
       setLoading(false);
     };
 
@@ -37,8 +45,8 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-4">
-          {!loading && userEmail && (
-            <p className="text-sm text-slate-600">{userEmail}</p>
+          {!loading && displayName && (
+            <p className="text-sm text-slate-600">👋 {displayName}</p>
           )}
           <Button onClick={handleSignOut} variant="outline" size="sm">
             Sign Out
