@@ -12,11 +12,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [supabaseError, setSupabaseError] = useState<string | null>(null);
-  const [isSignUp, setIsSignUp] = useState(false); // toggle mode
+  const [isSignUp, setIsSignUp] = useState(false);
   const router = useRouter();
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
@@ -46,6 +47,9 @@ export default function LoginPage() {
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/auth/callback`,
+            data: {
+              full_name: name,  // <-- stored in user_metadata
+            },
           },
         });
         if (error) throw error;
@@ -98,9 +102,6 @@ export default function LoginPage() {
             <Alert variant="destructive">
               <AlertDescription>{supabaseError}</AlertDescription>
             </Alert>
-            <p className="text-sm text-slate-600">
-              Please configure your Supabase credentials in the environment variables.
-            </p>
           </CardContent>
         </Card>
       </div>
@@ -130,6 +131,20 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Show name field only on sign-up */}
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -179,7 +194,12 @@ export default function LoginPage() {
           <div className="text-center">
             <button
               type="button"
-              onClick={() => { setIsSignUp(!isSignUp); setError(null); setSuccessMessage(null); }}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError(null);
+                setSuccessMessage(null);
+                setName('');
+              }}
               className="text-sm text-blue-600 hover:underline"
             >
               {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Create one"}
