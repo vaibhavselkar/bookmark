@@ -8,7 +8,7 @@ import { BookmarkForm } from '@/components/bookmark-form';
 import { BookmarkList } from '@/components/bookmark-list';
 import { type Bookmark } from '@/lib/types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
+export const dynamic = 'force-dynamic';
 export default function DashboardPage() {
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
