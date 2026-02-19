@@ -22,7 +22,7 @@ export default function LoginPage() {
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
   useEffect(() => {
-    try {
+    try { 
       const { createClient } = require('@/lib/supabase/client');
       setSupabase(createClient());
     } catch (err) {
