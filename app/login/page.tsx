@@ -14,7 +14,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [supabaseError, setSupabaseError] = useState<string | null>(null);
+  const [isSignUp, setIsSignUp] = useState(false); // toggle mode
   const router = useRouter();
   const [supabase, setSupabase] = useState<SupabaseClient | null>(null);
 
@@ -27,7 +29,7 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleEmailSignIn = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabase) {
       setError('Supabase is not configured');
@@ -35,16 +37,27 @@ export default function LoginPage() {
     }
     setLoading(true);
     setError(null);
+    setSuccessMessage(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      router.push('/dashboard');
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+        if (error) throw error;
+        setSuccessMessage('Check your email for the confirmation link!');
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        router.push('/dashboard');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -67,38 +80,9 @@ export default function LoginPage() {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-
       if (error) throw error;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      setLoading(false);
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!supabase) {
-      setError('Supabase is not configured');
-      return;
-    }
-    setLoading(true);
-    setError(null);
-
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) throw error;
-      setError(null);
-      alert('Check your email for the confirmation link!');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
       setLoading(false);
     }
   };
@@ -115,7 +99,7 @@ export default function LoginPage() {
               <AlertDescription>{supabaseError}</AlertDescription>
             </Alert>
             <p className="text-sm text-slate-600">
-              Please configure your Supabase credentials in the environment variables to get started. Check the SETUP.md file for instructions.
+              Please configure your Supabase credentials in the environment variables.
             </p>
           </CardContent>
         </Card>
@@ -128,7 +112,9 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-3xl font-bold">Smart Bookmarks</CardTitle>
-          <CardDescription>Sign in to manage your bookmarks</CardDescription>
+          <CardDescription>
+            {isSignUp ? 'Create an account to get started' : 'Sign in to manage your bookmarks'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {error && (
@@ -137,7 +123,13 @@ export default function LoginPage() {
             </Alert>
           )}
 
-          <form onSubmit={handleEmailSignIn} className="space-y-4">
+          {successMessage && (
+            <Alert>
+              <AlertDescription>{successMessage}</AlertDescription>
+            </Alert>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -161,7 +153,7 @@ export default function LoginPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
             </Button>
           </form>
 
@@ -175,6 +167,7 @@ export default function LoginPage() {
           </div>
 
           <Button
+            type="button"
             onClick={handleGoogleSignIn}
             variant="outline"
             className="w-full"
@@ -183,16 +176,14 @@ export default function LoginPage() {
             Sign in with Google
           </Button>
 
-          <div className="text-center space-y-2">
-            <p className="text-sm text-slate-600">Don't have an account?</p>
-            <Button
-              onClick={handleSignUp}
-              variant="ghost"
-              className="w-full"
-              disabled={loading}
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => { setIsSignUp(!isSignUp); setError(null); setSuccessMessage(null); }}
+              className="text-sm text-blue-600 hover:underline"
             >
-              Create Account
-            </Button>
+              {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Create one"}
+            </button>
           </div>
         </CardContent>
       </Card>
